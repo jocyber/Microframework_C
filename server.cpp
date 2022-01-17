@@ -6,18 +6,18 @@
 #include <sys/types.h>
 #include <string>
 #include <fstream>
+#include "httpReq.h"
 
 #define unsigned int uint
 #define PORT 5200
 #define BUFFSIZE 512
-
-void errexit(const std::string message);
+#define REQUEST_SIZE 256
 
 int main(int argc, char **argv)
 {
-	std::string HTTP_OK = "HTTP/1.1 200 OK";
-	std::string HTTP_ERROR = "HTTP/1.1 404 Not Found";
 	int sockfd, clientfd;
+	std::fstream file;
+	char req[REQUEST_SIZE];
 
 	if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 		errexit("Could not connect to the socket.");
@@ -37,15 +37,22 @@ int main(int argc, char **argv)
 	while(true) {
 		if((clientfd = accept(sockfd, NULL, NULL)) == -1)
 			errexit("Could not accept the oncoming connection.");
-		
-		send(clientfd, HTTP_OK.c_str(), BUFFSIZE, 0);
 
+		recv(clientfd, req, REQUEST_SIZE, 0);
+		std::string request(req);
+		
+		//function for handling the type of request
+		if(request.substr(0, 3).compare("GET") == 0) {
+			if(handleGetRequest(request, file, clientfd) == -1) {
+				if(close(clientfd) == -1)
+					errexit("Failed to close the client connection.");
+
+				//respond with 404 error
+				continue;
+			}
+		}
+		
 		if(close(clientfd) == -1)
 			errexit("Failed to close the client connection.");
 	}
-}
-
-void errexit(const std::string message) {
-	std::cerr << message << '\n';
-	exit(EXIT_FAILURE);
 }
