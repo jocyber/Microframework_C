@@ -17,5 +17,5 @@ start:
 	./structure.sh
 
 open:
-	vim -p $(SOURCE)/*.cpp $(SOURCE)*.h
+	vim -p $(SOURCE)/*.cpp $(SOURCE)/*.h
 
