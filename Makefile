@@ -1,13 +1,14 @@
 FLAGS := -Wall -pedantic-errors -O2 -g
+SOURCE := source_files
 
 all: server
 
-%: %.cpp httpReq.cpp
-	g++ $(FLAGS) $^ -o framework
+%: $(SOURCE)/%.cpp $(SOURCE)/httpReq.cpp
+	g++ $(FLAGS) $^ -o $(SOURCE)/framework
 
 run:
-	./framework
+	$(SOURCE)/framework
 
 clean:
-	rm framework
+	rm $(SOURCE)/framework
 
