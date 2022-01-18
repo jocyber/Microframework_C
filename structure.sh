@@ -13,5 +13,4 @@ then
 	<body>
 	</body>
 </html>" > templates/index.html
-
 fi

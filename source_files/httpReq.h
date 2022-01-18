@@ -15,7 +15,7 @@ const std::string HTTP_ERROR = "HTTP/1.1 404 Not Found\r\n\n";
 
 extern void errexit(const std::string message);
 
-int handleGetRequest(const std::string &request, std::fstream &file, const int &clientfd);
+int handleGetRequest(const std::string &request, std::fstream &file, int &clientfd);
 std::string getRequestedFile(const std::string &request);
 
 #endif
