@@ -2,8 +2,7 @@
 
 int handleGetRequest(const std::string &request, std::fstream &file, int &clientfd) {
 		std::string reqFile = getRequestedFile(request);
-
-		file.open("templates/" + reqFile, std::ios::in);
+		file.open(reqFile, std::ios::in);
 
 		if(!file.is_open()) {
 			std::cerr << "File could not be opened.\n";
@@ -31,11 +30,16 @@ std::string getRequestedFile(const std::string &request) {
 	for(unsigned int i = 5; request[i] != ' '; ++i)
 		reqFile += request[i];
 
+	//if css extension is found, then just return the directory path
+	//.html extension will not work here, this is for any other generic file type
+	if(reqFile.find(".") != std::string::npos)
+		return reqFile;
+
 	if(reqFile.length() == 0)
 		reqFile = "index";
 
-	//if user give file with .html, it will fail
-	return reqFile + ".html";	
+	//if the file type is .html, this will return it
+	return "templates/" + reqFile + ".html";	
 }
 
 void errexit(const std::string message) {
