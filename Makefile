@@ -12,3 +12,6 @@ run:
 clean:
 	rm $(SOURCE)/framework
 
+start:
+	./structure.sh
+
