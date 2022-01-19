@@ -65,7 +65,7 @@ std::string web::app::getRequestedFile(const std::string &request) {
 	return "templates/" + reqFile + ".html";	
 }
 
-void web::app::run() {
+void web::app::run(std::string(*mainLogic)(const std::string &request)) {
 	while(true) {
 		if((clientfd = accept(sockfd, NULL, NULL)) == -1)
 			errexit("Could not accept the oncoming connection.");

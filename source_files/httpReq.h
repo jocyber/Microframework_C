@@ -29,7 +29,7 @@ namespace web {
 		public:
 			app();
 			~app();
-			void run();
+			void run(std::string(*mainLogic)(const std::string &request));
 			int handleGetRequest(const std::string &request, std::fstream &file, int &clientfd);
 
 		private:
