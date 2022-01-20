@@ -23,9 +23,9 @@ web::app::~app() {
 		errexit("Could not close the socket connection.");
 }
 
-int web::app::handleGetRequest(const std::string &request, std::fstream &file, int &clientfd) {
-		std::string reqFile = getRequestedFile(request);
-		file.open(reqFile, std::ios::in);
+int web::app::handleGetRequest(const std::string &name) {
+		std::cerr << name << '\n';
+		file.open(name, std::ios::in);
 
 		if(!file.is_open()) {
 			std::cerr << "File could not be opened.\n";
@@ -53,7 +53,6 @@ std::string web::app::getRequestedFile(const std::string &request) {
 	for(unsigned int i = 5; request[i] != ' '; ++i)
 		reqFile += request[i];
 
-	//if css extension is found, then just return the directory path
 	//.html extension will not work here, this is for any other generic file type
 	if(reqFile.find(".") != std::string::npos)
 		return reqFile;
@@ -62,10 +61,12 @@ std::string web::app::getRequestedFile(const std::string &request) {
 		reqFile = "index";
 
 	//if the file type is .html, this will return it
-	return "templates/" + reqFile + ".html";	
+	return reqFile + ".html";	
 }
 
-void web::app::run(std::string(*mainLogic)(const std::string &request)) {
+/********** RUN FUNCTION **************/
+void web::app::run(std::string(*mainLogic)(void)) {
+
 	while(true) {
 		if((clientfd = accept(sockfd, NULL, NULL)) == -1)
 			errexit("Could not accept the oncoming connection.");
@@ -73,9 +74,26 @@ void web::app::run(std::string(*mainLogic)(const std::string &request)) {
 		recv(clientfd, req, REQUEST_SIZE, 0);
 		std::string request(req);
 		
+		//fill the http request method
+		req_method.clear();
+		for(unsigned int i = 0; request[i] != ' '; ++i)
+			req_method += request[i];
+
+		//get the file that's being requested by the client
+		//guarantees .html file extension
+		file_name = getRequestedFile(request);	
+
+		//parse the type of file that is being requested
+		//should add code that gaurds against files names that are not large enough
+		if(file_name.substr(file_name.length() - 5).compare(".html") == 0)
+			file_name = "templates/" + mainLogic(); //user returns the desired html file to render
+		//otherwise, load the css or image file
+
+		//handleGETRequest
 		//function for handling the type of request
-		if(request.substr(0, 3).compare("GET") == 0) {
-			if(handleGetRequest(request, file, clientfd) == -1) {
+		if(req_method.compare("GET") == 0) {
+			//will need to modify this function
+			if(handleGetRequest(file_name) == -1) {
 				if(close(clientfd) == -1)
 					errexit("Failed to close the client connection.");
 
@@ -88,7 +106,6 @@ void web::app::run(std::string(*mainLogic)(const std::string &request)) {
 			errexit("Failed to close the client connection.");
 	}
 }
-
 
 //exit the program on critical error
 void errexit(const std::string message) {

@@ -26,14 +26,18 @@ namespace web {
 		std::fstream file;
 		char req[REQUEST_SIZE];
 
+		std::string req_method = "", file_name = "";
+
 		public:
 			app();
 			~app();
-			void run(std::string(*mainLogic)(const std::string &request));
-			int handleGetRequest(const std::string &request, std::fstream &file, int &clientfd);
+			void run(std::string(*mainLogic)(void));
+			std::string getMethodType() const {return req_method;}
+			std::string getFileName() const {return file_name;}
 
 		private:
 			std::string getRequestedFile(const std::string &request);
+			int handleGetRequest(const std::string &name);
 	};
 }
 
