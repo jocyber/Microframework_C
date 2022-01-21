@@ -28,33 +28,46 @@ web::app::~app() {
 
 int web::app::handleGetRequest(const std::string &name) {
 		struct stat sb;
-		file = fopen(name.c_str(), "r");
+		file = open(name.c_str(), O_RDONLY);
 
-		if(file == nullptr) {
+		if(file == -1) {
 			std::cerr << "File could not be opened.\n";
 			return -1;
 		}
 
 		//copy file contents into string
 		stat(name.c_str(), &sb); // retrieve file size
-		unsigned int string_size = HTTP_HEADER.length() + sb.st_size;
 
-		//copy file contents into string
-		char *buffer = (char*) malloc(string_size);
-		strcpy(buffer, HTTP_HEADER.c_str());
-
-		//should guard against empty file contents
-		fread(buffer + HTTP_HEADER.length(), string_size, 1, file);
-		fclose(file);	// close the file
-
-		//send response to client's browser
-		if(send(clientfd, buffer, string_size, 0) == -1) {
-			free(buffer);
-			std::cerr << "Failed to send data back to the client.\n";
+		//enable TCP_CORK
+		int optval = 1;
+		if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1) {
+			std::cerr << "Failed to enable TCP_CORK.\n";
 			return -1;
 		}
 
-		free(buffer);
+		//send the file data
+		if(write(clientfd, HTTP_HEADER.c_str(), HTTP_HEADER.length()) == -1) {
+			std::cerr << "Failed to write HTTP_HEADER to client.\n";
+			return -1;
+		}	
+
+		if(sendfile(clientfd, file, 0, sb.st_size) == -1) {
+			std::cerr << "Failed to send file contents.\n";
+			return -1;
+		}
+
+		//disable TCP_CORK
+		optval = 0;
+		if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1) {
+			std::cerr << "Failed to disable TCP_CORK.\n";
+			return -1;
+		}
+
+		if(close(file) == -1) {
+			std::cerr << "Failed to close the requested file.\n";
+			return -1;
+		}
+
 		return 0;
 }
 
