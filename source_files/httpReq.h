@@ -8,7 +8,8 @@
 #include <sys/types.h>
 #include <string>
 #include <unistd.h>
-#include <fstream>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\n\n";
 const std::string HTTP_ERROR = "HTTP/1.1 404 Not Found\r\n\n";
@@ -23,7 +24,7 @@ namespace web {
 	class app {
 		int clientfd, sockfd;
 		struct sockaddr_in addr;
-		std::fstream file;
+		FILE *file;
 		char req[REQUEST_SIZE];
 
 		std::string req_method = "", file_name = "";

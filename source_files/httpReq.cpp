@@ -24,26 +24,35 @@ web::app::~app() {
 }
 
 int web::app::handleGetRequest(const std::string &name) {
-		std::cerr << name << '\n';
-		file.open(name, std::ios::in);
+		struct stat sb;
+		std::string response;
+		file = fopen(name.c_str(), "r");
 
-		if(!file.is_open()) {
+		if(file == nullptr) {
 			std::cerr << "File could not be opened.\n";
 			return -1;
 		}
 
-		//fill response string with file data		
-		std::string response = std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+		//copy file contents into string
+		stat(name.c_str(), &sb); // retrieve file size
+		response.resize(sb.st_size); // resize the string
+		size_t temp = fread(const_cast<char*>(response.data()), sb.st_size, 1, file);//fill the string
+		fclose(file);	// close the file
+
+		if(temp == 0) {
+			std::cerr << "No data to read from {" + name + "}\n";
+			return -1;
+		}
+
+		//prepend the http header
 		response = HTTP_HEADER + response;
 
 		//send response to client's browser
 		if(send(clientfd, response.c_str(), response.length(), 0) == -1) {
 			std::cerr << "Failed to send data back to the client.\n";
-			file.close();
 			return -1;
 		}
 
-		file.close();
 		return 0;
 }
 
@@ -62,49 +71,6 @@ std::string web::app::getRequestedFile(const std::string &request) {
 
 	//if the file type is .html, this will return it
 	return reqFile + ".html";	
-}
-
-/********** RUN FUNCTION **************/
-void web::app::run(std::string(*mainLogic)(void)) {
-
-	while(true) {
-		if((clientfd = accept(sockfd, NULL, NULL)) == -1)
-			errexit("Could not accept the oncoming connection.");
-
-		recv(clientfd, req, REQUEST_SIZE, 0);
-		std::string request(req);
-		
-		//fill the http request method
-		req_method.clear();
-		for(unsigned int i = 0; request[i] != ' '; ++i)
-			req_method += request[i];
-
-		//get the file that's being requested by the client
-		//guarantees .html file extension
-		file_name = getRequestedFile(request);	
-
-		//parse the type of file that is being requested
-		//should add code that gaurds against files names that are not large enough
-		if(file_name.substr(file_name.length() - 5).compare(".html") == 0)
-			file_name = "templates/" + mainLogic(); //user returns the desired html file to render
-		//otherwise, load the css or image file
-
-		//handleGETRequest
-		//function for handling the type of request
-		if(req_method.compare("GET") == 0) {
-			//will need to modify this function
-			if(handleGetRequest(file_name) == -1) {
-				if(close(clientfd) == -1)
-					errexit("Failed to close the client connection.");
-
-				//respond with 404 error
-				continue;
-			}
-		}
-		
-		if(close(clientfd) == -1)
-			errexit("Failed to close the client connection.");
-	}
 }
 
 //exit the program on critical error
