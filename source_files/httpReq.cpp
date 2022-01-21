@@ -12,20 +12,22 @@ web::app::app() {
 	addr.sin_addr.s_addr = INADDR_ANY;
 
 	if(bind(sockfd, (struct sockaddr *) &addr, sizeof(addr)) == -1)
-		errexit("Could not the port to the address.");
+		errexit("Could not bind the port to the address.");
 
 	listen(sockfd, 1);
 }
 
 //destructor
 web::app::~app() {
-	if(close(sockfd) == -1 || close(clientfd) == -1)
+	if(close(sockfd) == -1)
 		errexit("Could not close the socket connection.");
+
+	if(close(clientfd) == -1)
+		errexit("Could not close the client socket.");
 }
 
 int web::app::handleGetRequest(const std::string &name) {
 		struct stat sb;
-		std::string response;
 		file = fopen(name.c_str(), "r");
 
 		if(file == nullptr) {
@@ -35,24 +37,24 @@ int web::app::handleGetRequest(const std::string &name) {
 
 		//copy file contents into string
 		stat(name.c_str(), &sb); // retrieve file size
-		response.resize(sb.st_size); // resize the string
-		size_t temp = fread(const_cast<char*>(response.data()), sb.st_size, 1, file);//fill the string
+		unsigned int string_size = HTTP_HEADER.length() + sb.st_size;
+
+		//copy file contents into string
+		char *buffer = (char*) malloc(string_size);
+		strcpy(buffer, HTTP_HEADER.c_str());
+
+		//should guard against empty file contents
+		fread(buffer + HTTP_HEADER.length(), string_size, 1, file);
 		fclose(file);	// close the file
 
-		if(temp == 0) {
-			std::cerr << "No data to read from {" + name + "}\n";
-			return -1;
-		}
-
-		//prepend the http header
-		response = HTTP_HEADER + response;
-
 		//send response to client's browser
-		if(send(clientfd, response.c_str(), response.length(), 0) == -1) {
+		if(send(clientfd, buffer, string_size, 0) == -1) {
+			free(buffer);
 			std::cerr << "Failed to send data back to the client.\n";
 			return -1;
 		}
 
+		free(buffer);
 		return 0;
 }
 
