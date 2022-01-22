@@ -1,4 +1,5 @@
 #include "httpReq.h"
+#include <time.h>
 
 //constructor
 web::app::app() {
@@ -30,48 +31,57 @@ int web::app::handleGetRequest(const std::string &name) {
 		struct stat sb;
 		file = open(name.c_str(), O_RDONLY);
 
-		if(file == -1) {
-			std::cerr << "File could not be opened.\n";
+		if(file == -1)
 			return -1;
+
+		fstat(file, &sb); //retrieve file metadata
+
+		//if requested file is html, go ahead and send it
+		if(name.length() > 5 && name.substr(name.length() - 5, name.length()).compare(".html") == 0)
+			goto sendFile;
+
+		char date[20]; // day-month-year
+		char time[20]; 
+
+		//check if file was modified after the last request. If not, send 304 response
+		strftime(date, sizeof(date), "%d-%m-%y", localtime(&sb.st_ctime));
+		//parse last-modified from http request
+
+		//if the file was not modified and it's not an html file
+		if(!was_modified(date, time)) {	
+			if(write(clientfd, HTTP_IF_MODIFIED.c_str(), HTTP_IF_MODIFIED.length()) == -1)
+				return errclose("Failed to write HTTP_IF_MODIFIED to client.", file);
+		}
+		else {
+sendFile:
+			//enable TCP_CORK
+			int optval = 1;
+			if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
+				return errclose("Failed to enable TCP_CORK.", file);
+
+			//send the file data
+			if(write(clientfd, HTTP_HEADER.c_str(), HTTP_HEADER.length()) == -1)
+				return errclose("Failed to write HTTP_HEADER to client.", file);
+
+			if(sendfile(clientfd, file, 0, sb.st_size) == -1)
+				return errclose("Failed to send file contents.", file);
+
+			//disable TCP_CORK
+			optval = 0;
+			if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
+				return errclose("Failed to disable TCP_CORK.", file);
 		}
 
-		//copy file contents into string
-		stat(name.c_str(), &sb); // retrieve file size
-
-		//enable TCP_CORK
-		int optval = 1;
-		if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1) {
-			std::cerr << "Failed to enable TCP_CORK.\n";
-			return -1;
-		}
-
-		//send the file data
-		if(write(clientfd, HTTP_HEADER.c_str(), HTTP_HEADER.length()) == -1) {
-			std::cerr << "Failed to write HTTP_HEADER to client.\n";
-			return -1;
-		}	
-
-		if(sendfile(clientfd, file, 0, sb.st_size) == -1) {
-			std::cerr << "Failed to send file contents.\n";
-			return -1;
-		}
-
-		//disable TCP_CORK
-		optval = 0;
-		if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1) {
-			std::cerr << "Failed to disable TCP_CORK.\n";
-			return -1;
-		}
-
-		if(close(file) == -1) {
-			std::cerr << "Failed to close the requested file.\n";
-			return -1;
-		}
+		if(close(file) == -1)
+			return errclose("Failed to close the requested file.", file);
 
 		return 0;
 }
 
-std::string web::app::getRequestedFile(const std::string &request) {
+//compare modified time to last request time (stored in last_mode_date struct)
+bool web::app::was_modified(char date[], char time[]){return true;}
+
+std::string web::app::getRequestedFile(const std::string &request) const {
 	std::string reqFile;
 
 	for(unsigned int i = 5; request[i] != ' '; ++i)
@@ -92,4 +102,11 @@ std::string web::app::getRequestedFile(const std::string &request) {
 void errexit(const std::string message) {
 	std::cerr << message << '\n';
 	exit(EXIT_FAILURE);
+}
+
+int errclose(const std::string message, int fd) {
+	close(fd);
+
+	std::cerr << message << '\n';
+	return -1;
 }
