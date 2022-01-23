@@ -27,28 +27,29 @@ web::app::~app() {
 		errexit("Could not close the client socket.");
 }
 
-int web::app::handleGetRequest(const std::string &name) {
+int web::app::handleGetRequest(const std::string &name, const std::string &lastMod) {
 		struct stat sb;
 		file = open(name.c_str(), O_RDONLY);
 
-		if(file == -1)
+		if(file == -1) {
+			if(write(clientfd, HTTP_ERROR.c_str(), HTTP_ERROR.length()) == -1)
+				return -1;
+
 			return -1;
+		}
 
 		fstat(file, &sb); //retrieve file metadata
+		char date[20], time[20];//time: 	
 
 		//if requested file is html, go ahead and send it
-		if(name.length() > 5 && name.substr(name.length() - 5, name.length()).compare(".html") == 0)
+		if(name.substr(name.length() - 5, name.length()).compare(".html") == 0)
 			goto sendFile;
-
-		char date[20]; // day-month-year
-		char time[20]; 
 
 		//check if file was modified after the last request. If not, send 304 response
 		strftime(date, sizeof(date), "%d-%m-%y", localtime(&sb.st_ctime));
-		//parse last-modified from http request
 
 		//if the file was not modified and it's not an html file
-		if(!was_modified(date, time)) {	
+		if(!was_modified(date, time, lastMod)) {	
 			if(write(clientfd, HTTP_IF_MODIFIED.c_str(), HTTP_IF_MODIFIED.length()) == -1)
 				return errclose("Failed to write HTTP_IF_MODIFIED to client.", file);
 		}
@@ -77,9 +78,6 @@ sendFile:
 
 		return 0;
 }
-
-//compare modified time to last request time (stored in last_mode_date struct)
-bool web::app::was_modified(char date[], char time[]){return true;}
 
 std::string web::app::getRequestedFile(const std::string &request) const {
 	std::string reqFile;

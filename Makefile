@@ -17,3 +17,5 @@ start:
 open:
 	vim -p $(SOURCE)/*.cpp $(SOURCE)/*.h
 
+commit:
+	./commit.sh
