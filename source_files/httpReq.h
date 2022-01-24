@@ -12,15 +12,14 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <netinet/tcp.h>
-#include <unordered_map>
 
-const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\n\n";
+const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\nCache-Control: no-cache";
 const std::string HTTP_ERROR = "HTTP/1.1 404 Not Found\r\n\n";
 const std::string HTTP_IF_MODIFIED = "HTTP/1.1 304 Not Modified\r\n\n";
 
-#define PORT 5200
+#define PORT 5000
 #define BUFFSIZE 512
-#define REQUEST_SIZE 256
+#define REQUEST_SIZE 1024
 
 using usint = unsigned short int;
 extern void errexit(const std::string message);
@@ -28,11 +27,6 @@ extern int errclose(const std::string message, int fd);
 
 namespace web {
 	class app {
-		std::unordered_map<std::string, int> month_code = {
-		 {"Jan", 1}, {"Feb", 2}, {"Mar", 3}, {"Apr", 4}, {"May", 5}, {"Jun", 6},
-		 {"Jul", 7}, {"Aug", 8}, {"Sep", 9}, {"Oct", 10}, {"Nov", 11}, {"Dec", 12}
-		};
-
 		int clientfd, sockfd;
 		struct sockaddr_in addr;
 		int file;
@@ -49,8 +43,8 @@ namespace web {
 
 		private:
 			std::string getRequestedFile(const std::string &request) const;
-			int handleGetRequest(const std::string &name, const std::string &lastMod);
-			bool was_modified(char date[], char time[], const std::string &lastTime);
+			int handleGetRequest(const std::string &name, const std::string &etag);
+			std::string md5Hash(const std::string &filename);
 	};
 }
 

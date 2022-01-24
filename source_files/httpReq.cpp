@@ -1,5 +1,4 @@
 #include "httpReq.h"
-#include <time.h>
 
 //constructor
 web::app::app() {
@@ -27,29 +26,32 @@ web::app::~app() {
 		errexit("Could not close the client socket.");
 }
 
-int web::app::handleGetRequest(const std::string &name, const std::string &lastMod) {
+int web::app::handleGetRequest(const std::string &name, const std::string &etag) {
 		struct stat sb;
+		bool flag = false;
 		file = open(name.c_str(), O_RDONLY);
 
 		if(file == -1) {
 			if(write(clientfd, HTTP_ERROR.c_str(), HTTP_ERROR.length()) == -1)
-				return -1;
+				return errclose("Failed to write 404 error to socket.", file);
 
 			return -1;
 		}
 
 		fstat(file, &sb); //retrieve file metadata
-		char date[20], time[20];//time: 	
+		std::string fileHash, header = HTTP_HEADER;
 
 		//if requested file is html, go ahead and send it
-		if(name.substr(name.length() - 5, name.length()).compare(".html") == 0)
+		if(name.substr(name.length() - 5, name.length()).compare(".html") == 0) {
+			flag = true;
 			goto sendFile;
+		}
 
 		//check if file was modified after the last request. If not, send 304 response
-		strftime(date, sizeof(date), "%d-%m-%y", localtime(&sb.st_ctime));
+		fileHash = md5Hash(name);
 
 		//if the file was not modified and it's not an html file
-		if(!was_modified(date, time, lastMod)) {	
+		if(fileHash.compare(etag) == 0) {	
 			if(write(clientfd, HTTP_IF_MODIFIED.c_str(), HTTP_IF_MODIFIED.length()) == -1)
 				return errclose("Failed to write HTTP_IF_MODIFIED to client.", file);
 		}
@@ -61,7 +63,12 @@ sendFile:
 				return errclose("Failed to enable TCP_CORK.", file);
 
 			//send the file data
-			if(write(clientfd, HTTP_HEADER.c_str(), HTTP_HEADER.length()) == -1)
+			if(flag)
+				header += "\r\n\n";
+			else
+				header = header + "Etag: " + fileHash + "\r\n\n";
+
+			if(write(clientfd, header.c_str(), HTTP_HEADER.length()) == -1)
 				return errclose("Failed to write HTTP_HEADER to client.", file);
 
 			if(sendfile(clientfd, file, 0, sb.st_size) == -1)
@@ -103,7 +110,10 @@ void errexit(const std::string message) {
 }
 
 int errclose(const std::string message, int fd) {
-	close(fd);
+	if(close(fd) == -1) {
+		std::cerr << "Failed to close file descriptor.\n";
+		return -1;
+	}
 
 	std::cerr << message << '\n';
 	return -1;

@@ -8,13 +8,18 @@ void web::app::run(std::string(*mainLogic)(void)) {
 			errexit("Could not accept the oncoming connection.");
 
 		//receive http request
-		recv(clientfd, req, REQUEST_SIZE, 0);
-		std::string request(req);
+		if(recv(clientfd, req, REQUEST_SIZE, 0) == -1) {	
+			if(close(clientfd) == -1)
+				errexit("Failed to close the client connection.");
 
-		//get last-modified header
-		//
+			continue;
+		}
+
+		std::string request(req), etag = "";
+		std::cout << request << '\n';
 		
-		std::string findstr = "";
+		//get the etag from the http request
+
 		/*
 		for(unsigned int i = 0; i < request.size(); ++i) {
 			if(request[i] == 'I') {
@@ -33,7 +38,7 @@ void web::app::run(std::string(*mainLogic)(void)) {
 			req_method += request[i];
 
 		//get the file that's being requested by the client
-		//guarantees .html file extension
+		//guarantees .html file extension if filetype isn't specified
 		file_name = getRequestedFile(request);	
 
 		//parse the type of file that is being requested
@@ -46,7 +51,7 @@ void web::app::run(std::string(*mainLogic)(void)) {
 		//function for handling the type of request
 		if(req_method.compare("GET") == 0) {
 			//will need to modify this function
-			if(handleGetRequest(file_name, findstr) == -1) {
+			if(handleGetRequest(file_name, etag) == -1) {
 				if(close(clientfd) == -1)
 					errexit("Failed to close the client connection.");
 
