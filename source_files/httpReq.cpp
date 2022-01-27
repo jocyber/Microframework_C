@@ -26,7 +26,7 @@ web::app::~app() {
 		errexit("Could not close the client socket.");
 }
 
-int web::app::handleGetRequest(const std::string &name, const std::string &etag) {
+int web::app::handleGetRequest(const std::string &name, const std::string &request) {
 		struct stat sb;
 		bool flag = false;
 		file = open(name.c_str(), O_RDONLY);
@@ -39,7 +39,7 @@ int web::app::handleGetRequest(const std::string &name, const std::string &etag)
 		}
 
 		fstat(file, &sb); //retrieve file metadata
-		std::string fileHash, header = HTTP_HEADER;
+		std::string fileHash, header = HTTP_HEADER, etag;
 
 		//if requested file is html, go ahead and send it
 		if(name.substr(name.length() - 5, name.length()).compare(".html") == 0) {
@@ -48,7 +48,9 @@ int web::app::handleGetRequest(const std::string &name, const std::string &etag)
 		}
 
 		//check if file was modified after the last request. If not, send 304 response
-		fileHash = md5Hash(name);
+		//improve performace below with multithreading
+		etag = getEtag(request);
+		fileHash = md5Hash(name);//O(n) where n is the size of the file
 
 		//if the file was not modified and it's not an html file
 		if(fileHash.compare(etag) == 0) {	
@@ -66,9 +68,9 @@ sendFile:
 			if(flag)
 				header += "\r\n\n";
 			else
-				header = header + "Etag: " + fileHash + "\r\n\n";
+				header = header + "\r\nEtag: " + fileHash + "\r\n\n";
 
-			if(write(clientfd, header.c_str(), HTTP_HEADER.length()) == -1)
+			if(write(clientfd, header.c_str(), header.length()) == -1)
 				return errclose("Failed to write HTTP_HEADER to client.", file);
 
 			if(sendfile(clientfd, file, 0, sb.st_size) == -1)

@@ -15,23 +15,8 @@ void web::app::run(std::string(*mainLogic)(void)) {
 			continue;
 		}
 
-		std::string request(req), etag = "";
-		std::cout << request << '\n';
+		std::string request(req);
 		
-		//get the etag from the http request
-
-		/*
-		for(unsigned int i = 0; i < request.size(); ++i) {
-			if(request[i] == 'I') {
-				if(request.substr(i, i + 17).compare("If-Modified-Since") == 0) {
-					i += 24;
-					findstr = request.substr(i, i + 20);
-					break;
-				}
-			}
-		}
-		*/
-
 		//fill the http request method for user to query
 		req_method.clear();
 		for(unsigned int i = 0; request[i] != ' '; ++i)
@@ -51,7 +36,7 @@ void web::app::run(std::string(*mainLogic)(void)) {
 		//function for handling the type of request
 		if(req_method.compare("GET") == 0) {
 			//will need to modify this function
-			if(handleGetRequest(file_name, etag) == -1) {
+			if(handleGetRequest(file_name, request) == -1) {
 				if(close(clientfd) == -1)
 					errexit("Failed to close the client connection.");
 

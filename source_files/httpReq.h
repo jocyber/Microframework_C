@@ -12,14 +12,15 @@
 #include <fcntl.h>
 #include <sys/sendfile.h>
 #include <netinet/tcp.h>
+#include <stdexcept>
 
 const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\nCache-Control: no-cache";
 const std::string HTTP_ERROR = "HTTP/1.1 404 Not Found\r\n\n";
 const std::string HTTP_IF_MODIFIED = "HTTP/1.1 304 Not Modified\r\n\n";
 
 #define PORT 5000
-#define BUFFSIZE 512
-#define REQUEST_SIZE 1024
+#define BUFFSIZE 1024 // 1KB
+#define REQUEST_SIZE 4096 // 4KB
 
 using usint = unsigned short int;
 extern void errexit(const std::string message);
@@ -43,9 +44,21 @@ namespace web {
 
 		private:
 			std::string getRequestedFile(const std::string &request) const;
-			int handleGetRequest(const std::string &name, const std::string &etag);
+			int handleGetRequest(const std::string &name, const std::string &request);
 			std::string md5Hash(const std::string &filename);
+			std::string getEtag(const std::string &req);
 	};
 }
+
+//custom exception object
+class Custom_Error : std::exception {
+	const char *message;
+
+	Custom_Error(const char* _message) : message(_message) {}
+
+	const char* what() const throw() {
+		return message;
+	}
+};
 
 #endif
