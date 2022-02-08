@@ -2,9 +2,9 @@
 #define HTTP
 
 #include <arpa/inet.h>
-#include <iostream>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <iostream>
 #include <sys/types.h>
 #include <string>
 #include <unistd.h>
@@ -22,39 +22,35 @@ const std::string HTTP_IF_MODIFIED = "HTTP/1.1 304 Not Modified\r\n\n";
 #define BUFFSIZE 1024 // 1KB
 #define REQUEST_SIZE 4096 // 4KB
 
-using usint = unsigned short int;
 extern void errexit(const std::string message);
-extern int errclose(const std::string message, int fd);
 
+//web app class
 namespace web {
 	class app {
 		int clientfd, sockfd;
 		struct sockaddr_in addr;
-		int file;
 		char req[REQUEST_SIZE];
-
-		std::string req_method = "", file_name = "";
 
 		public:
 			app();
 			~app();
-			void run(std::string(*mainLogic)(void));
-			std::string getMethodType() const {return req_method;}
-			std::string getFileName() const {return file_name;}
+			void run(std::string(*mainLogic)(const std::string&, const std::string&));
+			//friend void* handle_http_request(void* args);
 
 		private:
-			std::string getRequestedFile(const std::string &request) const;
-			int handleGetRequest(const std::string &name, const std::string &request);
-			std::string md5Hash(const std::string &filename);
-			std::string getEtag(const std::string &req);
+			std::string getRequestedFile(const char request[]) const;
+			int handleGetRequest(const std::string &name, const std::string &request, const int &clientfd) const;
+			std::string md5Hash(const std::string &filename) const;
+			std::string getEtag(const std::string &req) const;	
 	};
 }
 
 //custom exception object
-class Custom_Error : std::exception {
+class File_Close : std::exception {
 	const char *message;
 
-	Custom_Error(const char* _message) : message(_message) {}
+public:
+	File_Close(const char* _message) : message(_message) {}
 
 	const char* what() const throw() {
 		return message;

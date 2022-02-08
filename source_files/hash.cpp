@@ -2,13 +2,12 @@
 #include <stdio.h>
 
 //filename is the path to the file
-std::string web::app::md5Hash(const std::string &filename) {
+std::string web::app::md5Hash(const std::string &filename) const {
 	std::string command = "md5sum " + filename;
 	FILE *fileptr = popen(command.c_str(), "r");
 
 	if(fileptr == nullptr)
-		return "";
-		//throw exception when try is implemented
+		throw File_Close("Unable to open pointer to file.");
 
 	char buffer[BUFFSIZE];
 	std::string result = "";
@@ -26,7 +25,7 @@ std::string web::app::md5Hash(const std::string &filename) {
 }
 
 //get the etag cached by the browser
-std::string web::app::getEtag(const std::string &req) {
+std::string web::app::getEtag(const std::string &req) const {
 	std::string etag;
 
 	for(unsigned int i = 0; i != req.length(); ++i) {

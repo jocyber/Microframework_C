@@ -1,24 +1,40 @@
-#include <iostream>
 #include <string>
+#include <unordered_map>
 #include "httpReq.h"
 
-web::app App;
+//map for encoding html page names
+std::unordered_map<std::string, unsigned short> codes = {
+	{"index.html", 1}, {"test.html", 2}
+};
 
 //create a series of functions that handles different routes
 //framework will assume that all html files are in the 'templates' directory
 //if there are any subdirectories, the user must specify
-std::string mainLogic(void) { 
-	if(App.getFileName().compare("index.html") == 0) {
-		return "index.html";
+std::string mainLogic(const std::string &method, const std::string &file) { 
+	unsigned short page = 0;
+	page = codes[file];
+
+	//return html pages based on codes map
+	switch(page) {
+		case 1: 
+			return "index.html";
+		case 2:
+			return "test.html";
+
+		default:
+			return "404.html";
 	}
-	else if(App.getFileName().compare("test.html") == 0) 
-		return "test.html";
-	else
-		return "404.html";
 }
 
-int main(int argc, char **argv)
+//create or import functions for the routes here
+
+
+//main function to run the server
+int main(void)
 {
 	//web application object
-	App.run(mainLogic);
+	web::app App;
+
+	std::string(*func_pntr)(const std::string&, const std::string&) = &mainLogic;
+	App.run(func_pntr);
 }
