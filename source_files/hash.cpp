@@ -7,7 +7,7 @@ std::string web::app::md5Hash(const std::string &filename) const {
 	FILE *fileptr = popen(command.c_str(), "r");
 
 	if(fileptr == nullptr)
-		throw File_Close("Unable to open pointer to file.");
+		throw "Unable to open pointer to file.";
 
 	char buffer[BUFFSIZE];
 	std::string result = "";

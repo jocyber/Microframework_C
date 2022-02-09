@@ -26,82 +26,65 @@ web::app::~app() {
 		errexit("Could not close the client socket.");
 }
 
-int web::app::handleGetRequest(const std::string &name, const std::string &request, const int &clientfd) const {
+void web::app::handleGetRequest(const std::string &name, const std::string &request, const int &clientfd) const {
 		int file = open(name.c_str(), O_RDONLY);
+		struct stat sb;
+		bool flag = false;
 
-		try {
-			struct stat sb;
-			bool flag = false;
-
-			if(file == -1) {
-				if(write(clientfd, HTTP_ERROR.c_str(), HTTP_ERROR.length()) == -1)
-					throw File_Close("Failed to write 404 error to socket.");
-			}
-
-			fstat(file, &sb); //retrieve file metadata
-			std::string fileHash, header = HTTP_HEADER, etag;
-
-			//if requested file is html, go ahead and send it
-			if(name.substr(name.length() - 5, name.length()).compare(".html") == 0) {
-				flag = true;
-				goto sendFile;
-			}
-
-			//check if file was modified after the last request. If not, send 304 response
-			//improve performace below with multithreading
-			etag = getEtag(request);
-			fileHash = md5Hash(name);//O(n) where n is the size of the file
-
-			//if the file was not modified and it's not an html file
-			if(fileHash.compare(etag) == 0) {	
-				if(write(clientfd, HTTP_IF_MODIFIED.c_str(), HTTP_IF_MODIFIED.length()) == -1)
-					throw File_Close("Failed to write HTTP_IF_MODIFIED to client.");
-			}
-			else {
-	sendFile:
-				//enable TCP_CORK
-				int optval = 1;
-				if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
-					throw File_Close("Failed to enable TCP_CORK.");
-
-				//send the file data
-				if(flag)
-					header += "\r\n\n";
-				else
-					header = header + "\r\nEtag: " + fileHash + "\r\n\n";
-
-				if(write(clientfd, header.c_str(), header.length()) == -1)
-					throw File_Close("Failed to write HTTP_HEADER to client.");
-
-				if(sendfile(clientfd, file, 0, sb.st_size) == -1)
-					throw File_Close("Failed to send file contents.");
-
-				//disable TCP_CORK
-				optval = 0;
-				if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
-					throw File_Close("Failed to disable TCP_CORK.");
-			}
-
-			if(close(file) == -1)
-				throw "Failed to close the requested file.";
-
-			return 0;
-		}
-		catch(const File_Close &mess) {
-			std::cerr << mess.what() << '\n';
-			close(file);
-		}
-		catch(const char* message) {
-			std::cerr << message << '\n';
-		}
-		catch(...) {
-			std::cerr << "Unknown error occured.\n";
+		if(file == -1) {
+			if(write(clientfd, HTTP_ERROR.c_str(), HTTP_ERROR.length()) == -1)
+				throw "Failed to write 404 error to socket.";
 		}
 
-		return -1;
+		fstat(file, &sb); //retrieve file metadata
+		std::string fileHash, header = HTTP_HEADER, etag;
+
+		//if requested file is html, go ahead and send it
+		if(name.substr(name.length() - 5, name.length()).compare(".html") == 0) {
+			flag = true;
+			goto sendFile;
+		}
+
+		//check if file was modified after the last request. If not, send 304 response
+		//improve performace below with multithreading
+		etag = getEtag(request);
+		fileHash = md5Hash(name);//O(n) where n is the size of the file
+
+		//if the file was not modified and it's not an html file
+		if(fileHash.compare(etag) == 0) {	
+			if(write(clientfd, HTTP_IF_MODIFIED.c_str(), HTTP_IF_MODIFIED.length()) == -1)
+				throw File_Close("Failed to write HTTP_IF_MODIFIED to client.", file);
+		}
+		else {
+sendFile:
+			//enable TCP_CORK
+			int optval = 1;
+			if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
+				throw File_Close("Failed to enable TCP_CORK.", file);
+
+			//send the file data
+			if(flag)
+				header += "\r\n\n";
+			else
+				header += ("Etag: " + fileHash + "\r\n\n");
+
+			if(write(clientfd, header.c_str(), header.length()) == -1)
+				throw File_Close("Failed to write HTTP_HEADER to client.", file);
+
+			if(sendfile(clientfd, file, 0, sb.st_size) == -1)
+				throw File_Close("Failed to send file contents.", file);
+
+			//disable TCP_CORK
+			optval = 0;
+			if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
+				throw File_Close("Failed to disable TCP_CORK.", file);
+		}
+
+		if(close(file) == -1)
+			throw "Failed to close the requested file.";
 }
 
-std::string web::app::getRequestedFile(const char request[]) const {
+std::string web::app::getRequestedFile(const char *request) const {
 	std::string reqFile;
 
 	for(unsigned int i = 5; request[i] != ' '; ++i)

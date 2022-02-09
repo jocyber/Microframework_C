@@ -1,4 +1,4 @@
-FLAGS := -std=c++17 -Wall -pedantic-errors -O2 -g
+FLAGS := -std=c++17 -Wall -pedantic-errors -O2 -g -pthread
 SOURCE := source_files
 EXE := framework
 
