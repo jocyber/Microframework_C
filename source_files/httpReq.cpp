@@ -84,13 +84,13 @@ sendFile:
 			throw "Failed to close the requested file.";
 }
 
-std::string web::app::getRequestedFile(const char *request) const {
+std::string web::app::getRequestedFile(const char *request, unsigned int start) const {
 	std::string reqFile;
 
-	for(unsigned int i = 5; request[i] != ' '; ++i)
+	for(unsigned int i = start + 2; request[i] != ' '; i++)
 		reqFile += request[i];
 
-	//.html extension will not work here, this is for any other generic file type
+	//this is for any generic file type. Will create a set that contains all supported file types, soon
 	if(reqFile.find(".") != std::string::npos)
 		return reqFile;
 
