@@ -66,7 +66,7 @@ sendFile:
 			if(flag)
 				header += "\r\n\n";
 			else
-				header += ("Etag: " + fileHash + "\r\n\n");
+				header += ("\r\nEtag: " + fileHash + "\r\n\n");
 
 			if(write(clientfd, header.c_str(), header.length()) == -1)
 				throw File_Close("Failed to write HTTP_HEADER to client.", file);
