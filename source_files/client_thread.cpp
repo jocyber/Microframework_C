@@ -1,6 +1,6 @@
 #include "httpReq.h"
 
-void web::app::handle_client(void) {
+void web::app::handle_client(int clientfd) {
 	try {
 		std::string req_method;
 		for(unsigned int i = 0; req[i] != ' '; ++i)

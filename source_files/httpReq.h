@@ -24,13 +24,14 @@ typedef std::unordered_map<std::string, std::string> Map;
 
 #define PORT 5000
 #define BUFFSIZE 1000 // 1KB
+#define POOLSIZE 5
 
 extern void errexit(const std::string message);
 
 //web app class
 namespace web {
 	class app {
-		int clientfd, sockfd;
+		int sockfd;
 		struct sockaddr_in addr;
 		char req[BUFFSIZE];
 
@@ -46,9 +47,12 @@ namespace web {
 			std::string md5Hash(const std::string &filename) const;
 			std::string getEtag(const std::string &req) const;	
 
-			void handle_client(void);
 			//defined by the user
 			std::string mainLogic(const std::string &method, const std::string &file, const Map &form) const;
+
+			//working thread
+			void worker_thread(void);
+			void handle_client(int clientfd);
 	};
 }
 
@@ -65,7 +69,8 @@ public:
 	}
 
 	void closeFd() const {
-		close(fd);
+		if(close(fd) == -1)
+			std::cerr << "Failed to close the file descriptor: {" << fd << "}\n";
 	}
 };
 

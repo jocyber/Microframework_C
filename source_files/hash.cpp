@@ -9,16 +9,13 @@ std::string web::app::md5Hash(const std::string &filename) const {
 	if(fileptr == nullptr)
 		throw "Unable to open pointer to file.";
 
-	char buffer[BUFFSIZE];
+	const unsigned int md5Length = 33;
+	char buffer[md5Length];
 	std::string result = "";
 
 	//append buffer to result string
-	while(fgets(buffer, BUFFSIZE, fileptr) != NULL)
-		result += buffer;
-
-	//exclude the filename at the end of the output
-	//md5 hash is always 32 characters long
-	result = result.substr(0, 32);
+	fgets(buffer, md5Length, fileptr);
+	result += buffer;
 
 	pclose(fileptr);
 	return result;

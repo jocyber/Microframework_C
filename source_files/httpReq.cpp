@@ -6,6 +6,7 @@ web::app::app() {
 		errexit("Could not connect to the socket.");
 
 	memset((struct sockaddr_in *) &addr, 0, sizeof(addr));
+	memset(req, '\0', BUFFSIZE);
 
 	addr.sin_port = htons(PORT);
 	addr.sin_family = AF_INET;
@@ -21,9 +22,6 @@ web::app::app() {
 web::app::~app() {
 	if(close(sockfd) == -1)
 		errexit("Could not close the socket connection.");
-
-	if(close(clientfd) == -1)
-		errexit("Could not close the client socket.");
 }
 
 void web::app::handleGetRequest(const std::string &name, const std::string &request, const int &clientfd) const {
