@@ -2,12 +2,14 @@
 #define PATHS
 
 #include "../source_files/httpReq.h" //path to header file
-#include <mariadb/mysql.h>
+#include <mysql.h>
 
 struct Connection_Info {
-    const std::string server, user, password, database;
+    std::string server, user, password, database;
 };
 
+MYSQL* sql_connect(const struct Connection_Info &connect);
+MYSQL_RES* sql_exec_query(MYSQL* conn, const char* query);
 std::string retrieveIndex(void);
 
 #endif

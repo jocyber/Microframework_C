@@ -1,10 +1,11 @@
-FLAGS := -std=c++20 -Wall -pedantic-errors -O2 -g -pthread -L/usr/include/mariadb/mysql -lmariadbclient
+FLAGS := -std=c++20 -Wall -pedantic-errors -O2 -g -pthread
+SQL := `mariadb_config --cflags --libs`
 SOURCE := source_files
 DEV := Dev_Folder
 EXE := framework
 
 all: $(SOURCE)/*.cpp $(DEV)/*.cpp
-	g++ $(FLAGS) $^ -o $(EXE)
+	g++ $(FLAGS) $^ -o $(EXE) $(SQL)
 
 run:
 	./$(EXE)
