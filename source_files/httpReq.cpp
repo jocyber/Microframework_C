@@ -32,10 +32,12 @@ void web::app::handleGetRequest(const std::string &name, const std::string &requ
 		if(file == -1) {
 			if(write(clientfd, HTTP_ERROR.c_str(), HTTP_ERROR.length()) == -1)
 				throw "Failed to write 404 error to socket.";
+
+			return;
 		}
 
 		fstat(file, &sb); //retrieve file metadata
-		std::string fileHash, header = HTTP_HEADER, etag;
+		std::string header = HTTP_HEADER, etag, fileHash;
 
 		//if requested file is html, go ahead and send it
 		if(name.substr(name.length() - 5, name.length()).compare(".html") == 0) {

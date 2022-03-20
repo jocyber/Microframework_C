@@ -43,7 +43,7 @@ namespace web {
 		private:
 			std::string getRequestedFile(const char *request, unsigned int start) const;
 			void handleGetRequest(const std::string &name, const std::string &request, const int &clientfd) const;
-			Map handlePostRequest(const std::string &header) const;
+			void handlePostRequest(const std::string &header, Map &form_data) const;
 			std::string md5Hash(const std::string &filename) const;
 			std::string getEtag(const std::string &req) const;	
 

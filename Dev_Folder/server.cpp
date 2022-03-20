@@ -1,4 +1,4 @@
-#include "httpReq.h"
+#include "paths.h"
 
 //map for encoding html page names
 std::unordered_map<std::string, unsigned short> codes = {
@@ -15,7 +15,7 @@ std::string web::app::mainLogic(const std::string &method, const std::string &fi
 	//return html pages based on codes map
 	switch(page) {
 		case 1: 
-			return "index.html";
+			return retrieveIndex();
 		case 2:
 			return "test.html";
 
@@ -23,9 +23,6 @@ std::string web::app::mainLogic(const std::string &method, const std::string &fi
 			return "404.html";
 	}
 }
-
-//create or import functions for the routes here
-
 
 //main function to run the server
 int main(void)

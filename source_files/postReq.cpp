@@ -1,8 +1,7 @@
 #include "httpReq.h"
 
- Map web::app::handlePostRequest(const std::string &header) const {
+void web::app::handlePostRequest(const std::string &header, Map &form_data) const {
 	unsigned int i = header.length();
-	Map form_data;
 
 	//go back to the beginning of the line
 	while(header.at(i - 1) != '\n') {i--;}
@@ -28,6 +27,4 @@
 				value += header[i];
 		}
 	}
-
-	return form_data;
 }

@@ -15,10 +15,10 @@ void web::app::handle_client(int clientfd) {
 		std::string request(req);
 		Map form_data;
 
-		if(req_method.compare("POST") == 0)//create unordered_map for post from name->value
-			form_data = handlePostRequest(request);//get content
+		if(req_method.compare("POST") == 0)//create unordered_map for post from name->value 
+			handlePostRequest(request, form_data);//get content
 
-		//determine which html file to send then send it
+		//determine which html file to send, then send it
 		if(file_name.length() > 5 && file_name.substr(file_name.length() - 5).compare(".html") == 0) {
 			file_name = "templates/" + mainLogic(req_method, file_name, form_data); //user returns the desired html file to render
 		}

@@ -1,10 +1,12 @@
 #include "httpReq.h"
 #include <thread> // use C++ threads instead of pthreads
 #include <mutex>
+#include <condition_variable>
 #include <queue>
 
 std::queue<int> producedData;
 std::mutex mtx;
+std::condition_variable cond;
 
 /********** RUN FUNCTION **************/
 void web::app::run() {
@@ -32,10 +34,11 @@ void web::app::run() {
 				continue;//perform a jump back to the beginning of the loop
 			}
 
-			mtx.lock();
+			std::unique_lock<std::mutex> locker(mtx);
 			producedData.push(clientfd);
-			mtx.unlock();
+			locker.unlock();
 
+			cond.notify_all(); // notify waiting threads that there's work to do
 		}//end of try block
 		catch(const char* message) {
 			std::cerr << message << '\n';
@@ -50,17 +53,16 @@ void web::app::run() {
 //worker thread
 void web::app::worker_thread(void) {
 	while(true) {
-		int client_sock = -1;
+		int client_sock;
 
-		mtx.lock();
+		std::unique_lock<std::mutex> locker(mtx);
+		cond.wait(locker, [](){return !producedData.empty();});
+
 		//critical section
-		if(!producedData.empty()) {
-			client_sock = producedData.front();
-			producedData.pop();
-		}
-		mtx.unlock();
+		client_sock = producedData.front();
+		producedData.pop();
+		locker.unlock();
 
-		if(client_sock != -1)
-			handle_client(client_sock);
+		handle_client(client_sock);
 	}
 }
