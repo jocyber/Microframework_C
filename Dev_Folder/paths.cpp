@@ -21,7 +21,7 @@ MYSQL_RES* sql_exec_query(MYSQL* conn, const char* query) {
 }
 
 //create or import functions for the routes here
-std::string retrieveIndex(void) {
+std::string retrieveIndex(std::string &html_data) {
 	MYSQL *conn;
 	MYSQL_RES *cursor;
 	MYSQL_ROW row;
@@ -32,11 +32,26 @@ std::string retrieveIndex(void) {
 	sql_info.server = "localhost";
 	sql_info.database = "Test";
 
+	std::vector<std::vector<std::string>> data; 
+
 	if((conn = sql_connect(sql_info)) != nullptr) {
 		if((cursor = sql_exec_query(conn, "SELECT * FROM Stuff;")) != nullptr) {
-			while((row = mysql_fetch_row(cursor)) != nullptr)
-				std::cout << row[0] << ' ' << row[1] << '\n';
+			while((row = mysql_fetch_row(cursor)) != nullptr) {
+				std::vector<std::string> rows = {row[0], row[1]};
+				data.push_back(rows);
+			}
 		}
+
+		std::vector<std::string> cols;
+		//retrieve column names
+		if((cursor = sql_exec_query(conn, "SHOW COLUMNS FROM Stuff;")) != nullptr) {
+			while((row = mysql_fetch_row(cursor)) != nullptr)
+				cols.push_back(row[0]);
+		}
+
+		std::vector<std::string> lists = {"list"};
+		html_data; //= getFileContents("templates/index.html");
+		generate_list(html_data, lists, data, cols);
 
 		mysql_free_result(cursor);
 		mysql_close(conn);

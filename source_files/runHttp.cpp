@@ -26,14 +26,6 @@ void web::app::run() {
 			if((clientfd = accept(sockfd, NULL, NULL)) == -1)
 				throw "Could not accept the oncoming connection.";
 
-			//receive http request
-			if(recv(clientfd, req, BUFFSIZE, 0) == -1) {	
-				if(close(clientfd) == -1)
-					throw "Failed to close the client connection.";
-
-				continue;//perform a jump back to the beginning of the loop
-			}
-
 			std::unique_lock<std::mutex> locker(mtx);
 			producedData.push(clientfd);
 			locker.unlock();

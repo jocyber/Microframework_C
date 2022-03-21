@@ -11,5 +11,10 @@
 		<a href="test.html">This is a test link</a>
 		<hr>
 		<img src="static/hello_world.jpeg">
+		<br>
+
+		{%for val in list%}
+			<p> val.name: val.id </p>
+		{%endfor%}
 	</body>
 </html>

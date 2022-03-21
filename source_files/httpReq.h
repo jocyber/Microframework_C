@@ -14,7 +14,7 @@
 #include <netinet/tcp.h>
 #include <stdexcept>
 #include <unordered_map>
-//download SQLAPI++ header for database connection
+#include <vector>
 
 const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\nCache-Control: no-cache";
 const std::string HTTP_ERROR = "HTTP/1.1 404 Not Found\r\n\n";
@@ -33,7 +33,6 @@ namespace web {
 	class app {
 		int sockfd;
 		struct sockaddr_in addr;
-		char req[BUFFSIZE];
 
 		public:
 			app();
@@ -47,8 +46,11 @@ namespace web {
 			std::string md5Hash(const std::string &filename) const;
 			std::string getEtag(const std::string &req) const;	
 
+			//generate the html code dynamically
+			void web::app::generate_list(std::string &content, const std::vector<std::string> &listName, const std::vector<std::vector<std::string>> &data, const std::vector<std::string> &cols) const;
+
 			//defined by the user
-			std::string mainLogic(const std::string &method, const std::string &file, const Map &form) const;
+			std::string mainLogic(const std::string &file, const Map &form, std::string &html_data) const;
 
 			//working thread
 			void worker_thread(void);
