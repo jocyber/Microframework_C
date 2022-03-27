@@ -46,9 +46,6 @@ namespace web {
 			std::string md5Hash(const std::string &filename) const;
 			std::string getEtag(const std::string &req) const;	
 
-			//generate the html code dynamically
-			void web::app::generate_list(std::string &content, const std::vector<std::string> &listName, const std::vector<std::vector<std::string>> &data, const std::vector<std::string> &cols) const;
-
 			//defined by the user
 			std::string mainLogic(const std::string &file, const Map &form, std::string &html_data) const;
 

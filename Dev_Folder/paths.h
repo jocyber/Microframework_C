@@ -10,6 +10,7 @@ struct Connection_Info {
 
 MYSQL* sql_connect(const struct Connection_Info &connect);
 MYSQL_RES* sql_exec_query(MYSQL* conn, const char* query);
-std::vector<std::vector<std::string>> retrieveData(std::string &html_data);
+std::string retrieveIndex(std::string &html_data, std::string file);
+void generate_list(std::string &content, const std::vector<std::string> &listName, const std::vector<std::vector<std::string>> &data, const std::vector<std::string> &cols);
 
 #endif

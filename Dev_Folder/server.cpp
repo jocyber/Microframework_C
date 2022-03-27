@@ -15,12 +15,12 @@ std::string web::app::mainLogic(const std::string &file, const Map &form, std::s
 	//return html pages based on codes map
 	switch(page) {
 		case 1: 
-			return retrieveIndex(html_data);
+			return "templates/" + retrieveIndex(html_data, "templates/index.html");
 		case 2:
-			return "test.html";
+			return "templates/test.html";
 
 		default:
-			return "404.html";
+			return "templates/404.html";
 	}
 }
 

@@ -6,7 +6,6 @@ web::app::app() {
 		errexit("Could not connect to the socket.");
 
 	memset((struct sockaddr_in *) &addr, 0, sizeof(addr));
-	memset(req, '\0', BUFFSIZE);
 
 	addr.sin_port = htons(PORT);
 	addr.sin_family = AF_INET;
@@ -56,7 +55,7 @@ void web::app::handleGetRequest(const std::string &name, const std::string &requ
 				throw File_Close("Failed to write HTTP_IF_MODIFIED to client.", file);
 		}
 		else {
-		sendFile:
+	sendFile:
 			//enable TCP_CORK
 			int optval = 1;
 			if(setsockopt(clientfd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) == -1)
