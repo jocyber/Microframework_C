@@ -1,4 +1,4 @@
-#include "paths.h"
+#include "routes.h"
 
 //map for encoding html page names
 std::unordered_map<std::string, unsigned short> codes = {
@@ -15,7 +15,7 @@ std::string web::app::mainLogic(const std::string &file, const Map &form, std::s
 	//return html pages based on codes map
 	switch(page) {
 		case 1: 
-			return "templates/" + retrieveIndex(html_data, "templates/index.html");
+			return "templates/" + retrieveData(html_data, "templates/index.html");
 		case 2:
 			return "templates/test.html";
 
