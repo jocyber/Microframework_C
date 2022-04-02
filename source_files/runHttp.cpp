@@ -21,6 +21,7 @@ void web::app::run() {
 
 	//semaphores have a busy-waiting problem, so use conditional variables to reduce
 	//wasted CPU cycles
+
 	while(true) {
 		try {
 			if((clientfd = accept(sockfd, NULL, NULL)) == -1)
@@ -30,7 +31,7 @@ void web::app::run() {
 			producedData.push(clientfd);
 			locker.unlock();
 
-			cond.notify_all(); // notify waiting threads that there's work to do
+			cond.notify_one(); // notify a waiting thread that there's work to do
 		}//end of try block
 		catch(const char* message) {
 			std::cerr << message << '\n';
@@ -48,7 +49,7 @@ void web::app::worker_thread(void) {
 		int client_sock;
 
 		std::unique_lock<std::mutex> locker(mtx);
-		cond.wait(locker, [](){return !producedData.empty();});
+		cond.wait(locker);
 
 		//critical section
 		client_sock = producedData.front();

@@ -11,11 +11,10 @@ std::string web::app::md5Hash(const std::string &filename) const {
 
 	const unsigned int md5Length = 33;
 	char buffer[md5Length];
-	std::string result = "";
 
 	//append buffer to result string
 	fgets(buffer, md5Length, fileptr);
-	result += buffer;
+	std::string result(buffer);
 
 	pclose(fileptr);
 	return result;

@@ -1,4 +1,4 @@
-FLAGS := -std=c++20 -Wall -pedantic-errors -O2 -g -pthread
+FLAGS := -std=c++20 -Wall -pedantic-errors -O3 -g -pthread
 SQL := `mariadb_config --cflags --libs`
 SOURCE := source_files
 DEV := Dev_Folder

@@ -16,7 +16,7 @@
 #include <unordered_map>
 #include <vector>
 
-const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\nCache-Control: no-cache";
+const std::string HTTP_HEADER = "HTTP/1.1 200 OK\r\nCache-Control: no-cache\r\n\n";
 const std::string HTTP_ERROR = "HTTP/1.1 404 Not Found\r\n\n";
 const std::string HTTP_IF_MODIFIED = "HTTP/1.1 304 Not Modified\r\n\n";
 
@@ -36,12 +36,12 @@ namespace web {
 
 		public:
 			app();
-			~app();
 			void run();
 
 		private:
-			std::string getRequestedFile(const char *request, unsigned int start) const;
+			std::string getRequestedFile(const char *request, unsigned int start, bool &isHTML) const;
 			void handleGetRequest(const std::string &name, const std::string &request, const int &clientfd) const;
+			void handleGetRequest(const std::string &name, const int &clientfd) const;
 			void handlePostRequest(const std::string &header, Map &form_data) const;
 			std::string md5Hash(const std::string &filename) const;
 			std::string getEtag(const std::string &req) const;	
